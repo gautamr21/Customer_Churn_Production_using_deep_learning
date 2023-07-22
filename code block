@@ -1,0 +1,86 @@
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+
+# Load your dataset
+# Replace 'data.csv' with the actual path to your dataset file
+# The dataset should contain columns for features and a 'Churn' column for the target variable
+data = pd.read_csv('data.csv')
+
+# Data Preprocessing
+
+# Separate features and target variable
+X = data.drop(columns=['Churn'])
+y = data['Churn']
+
+# Convert target variable to binary (1: churned, 0: not churned)
+y = y.astype(int)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Standardize the features for better model performance
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Model Building
+
+# Create a simple Multi-Layer Perceptron (MLP) model using Keras
+model = keras.Sequential([
+    layers.Dense(64, activation='relu', input_shape=(X_train_scaled.shape[1],)),
+    layers.Dropout(0.5),  # Adding dropout to prevent overfitting
+    layers.Dense(32, activation='relu'),
+    layers.Dropout(0.5),
+    layers.Dense(1, activation='sigmoid')  # Binary classification output
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+# Model Training
+
+# Define the number of training epochs and batch size
+epochs = 50
+batch_size = 32
+
+# Train the model on the training data
+model.fit(X_train_scaled, y_train, epochs=epochs, batch_size=batch_size, verbose=1)
+
+# Model Evaluation
+
+# Make predictions on the test data
+y_pred = model.predict_classes(X_test_scaled).flatten()
+
+# Convert predictions to binary (1: churned, 0: not churned)
+y_pred = (y_pred > 0.5).astype(int)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+
+# Print the classification report
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+
+# Print the confusion matrix
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+# Making Predictions for New Data
+
+# Suppose you have a new customer data in a DataFrame called 'new_data'
+# Preprocess the new_data (remember to use the same scaler used for training data)
+new_data_scaled = scaler.transform(new_data)
+
+# Make predictions on the new data
+new_data_pred = model.predict_classes(new_data_scaled).flatten()
+new_data_pred = (new_data_pred > 0.5).astype(int)
+
+# 'new_data_pred' will contain the churn predictions for the new customers (1: churned, 0: not churned)
